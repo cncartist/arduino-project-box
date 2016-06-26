@@ -1,0 +1,508 @@
+/* -----------------------------------
+ * Arduino Project Box LCD 
+ * temperature/humidity monitoring system
+ * by: cncartist - 04/25/2016
+/* -----------------------------------
+ * Arduino UNO
+ * 1.8 tft lcd // ST7735 // tiny red thing
+ * dht22 digital temp sensor
+ * ---------------
+ * LED = LED    == 3.3V
+ * SCK = CSK    == 13
+ * SDA = MOSI   == 11
+ * AD  = DC     == 9
+ * RESET = RST  == 8
+ * CS  = CS     == 10
+ * GND          == GND
+ * VCC          == 5V
+ * ---------------
+ * tmp1 = +5v
+ * tmp2 = D2 [ 10K to pin1 ]
+ * tmp4 = gnd
+ * ---------------
+ * 3.3 aref not reliable w lcd draw
+/* -----------------------------------
+
+// -----------------------------------
+//text colors used
+//color green - TFTscreen.stroke(20,255,20);
+//color white - TFTscreen.stroke(255,255,255);
+//color black - TFTscreen.stroke(0,0,0);
+//color purple - TFTscreen.stroke(0,0,0);
+
+// include libraries
+#include <TFT.h>  // Arduino LCD library
+#include <SPI.h>
+#include <DHT.h>
+
+// pin definition for the Uno
+#define cs   10
+#define dc   9
+#define rst  8 
+#define DHTPIN 2     // what digital pin we're connected to
+#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+
+// create an instance of the library
+TFT TFTscreen = TFT(cs, dc, rst);
+DHT dht(DHTPIN, DHTTYPE);
+
+// -----------------------------------
+// START declare variables
+char sensorPrintout[4];
+
+int tempVal;
+
+float tempPrevF;
+float tempPrevC;
+float tempPrevLow;
+float tempPrevHigh;
+
+float humCurPrev;
+float humCurPrevLow;
+float humCurPrevHigh;
+
+float tempLowest;
+float tempHighest;
+float humidCur;
+float humidLowest;
+float humidHighest;
+
+int mathTestVal;
+int mathTestVal2;
+int mathTestVal3;
+int mathTestVal4;
+
+int mathTestHumid;
+int mathTestHumidLow;
+int mathTestHumidHigh;
+
+int mathTestPrevF;
+int mathTestPrevC;
+
+int mathTestPrevHum;
+int mathTestPrevHumLow;
+int mathTestPrevHumHigh;
+int mathTestPrevTempLowest;
+int mathTestPrevTempHighest;
+
+// END declare variables
+// -----------------------------------
+
+// -----------------------------------
+// setup screen & text locations
+void setup() {
+  TFTscreen.begin();
+  TFTscreen.background(0, 0, 0);
+  TFTscreen.setRotation(0);
+
+  // temp & high/low text
+  TFTscreen.setTextSize(2);
+  TFTscreen.stroke(155,0,204);
+  TFTscreen.text("temp",2,2);
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(155,0,204);
+  TFTscreen.text("high",77,2);
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(155,0,204);
+  TFTscreen.text("low",77,32);
+
+  // humid & high/low text
+  TFTscreen.setTextSize(2);
+  TFTscreen.stroke(155,0,204);
+  TFTscreen.text("humid",3,85);
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(155,0,204);
+  TFTscreen.text("high",79,85);
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(155,0,204);
+  TFTscreen.text("low",79,115);
+
+  // large percentage
+  TFTscreen.setTextSize(2);
+  TFTscreen.stroke(20,255,20);
+  TFTscreen.text("%",46,110);
+  // small percentage
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(20,255,20);
+  TFTscreen.text("%",111,95);
+  TFTscreen.text("%",111,125);
+
+  // degree symbol for fahrenheit SMALL high
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(20,255,20);
+  TFTscreen.text("o",105,10);
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(20,255,20);
+  TFTscreen.text("F",112,15);
+
+  // degree symbol for fahrenheit SMALL low
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(20,255,20);
+  TFTscreen.text("o",105,40);
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(20,255,20);
+  TFTscreen.text("F",112,45);
+
+  // degree symbol for fahrenheit MAIN
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(20,255,20);
+  TFTscreen.text("o",41,20);
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(20,255,20);
+  TFTscreen.text("F",48,25);
+
+  // degree symbol for celsius MAIN
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(20,255,20);
+  TFTscreen.text("o",41,50);
+  TFTscreen.setTextSize(1);
+  TFTscreen.stroke(20,255,20);
+  TFTscreen.text("C",48,55);
+
+  dht.begin();
+}
+
+// This loop runs infinitely
+void loop() {
+  // ---------------------------------
+  // define values from sensor
+  float temperatureC = dht.readTemperature();     // Read temperature as Celsius (the default)
+  float temperatureF = dht.readTemperature(true); // Read temperature as Fahrenheit (isFahrenheit = true)
+  float humidCur = dht.readHumidity();
+
+  // set low and high temp & humidity
+  if(tempLowest==0 or temperatureF<tempLowest){
+    tempLowest=temperatureF;
+  }
+  if(tempHighest==0 or temperatureF>tempHighest){
+    tempHighest=temperatureF;
+  }
+  if(humidLowest==0 or humidCur<humidLowest){
+    humidLowest=humidCur;
+  }
+  if(humidHighest==0 or humidCur>humidHighest){
+    humidHighest=humidCur;
+  }
+  // ---------------------------------
+  // START converting to tft txt
+  mathTestVal = temperatureF;
+  mathTestVal2 = temperatureC;
+  mathTestVal3 = tempLowest;
+  mathTestVal4 = tempHighest;
+
+  mathTestHumid = humidCur;
+  mathTestHumidLow = humidLowest;
+  mathTestHumidHigh = humidHighest;
+
+  mathTestPrevF = tempPrevF;
+  mathTestPrevC = tempPrevC;
+  mathTestPrevTempLowest = tempPrevLow;
+  mathTestPrevTempHighest = tempPrevHigh;
+
+  mathTestPrevHum = humCurPrev;
+  mathTestPrevHumLow = humCurPrevLow;
+  mathTestPrevHumHigh = humCurPrevHigh;
+
+  char tempCharF[10]; // Space for 9 characters + null termination
+  sprintf(tempCharF, "%d", mathTestVal);
+  char tempCharC[10]; // Space for 9 characters + null termination
+  sprintf(tempCharC, "%d", mathTestVal2);
+
+  char tempCharLowest[10]; // Space for 9 characters + null termination
+  sprintf(tempCharLowest, "%d", mathTestVal3);
+  char tempCharHighest[10]; // Space for 9 characters + null termination
+  sprintf(tempCharHighest, "%d", mathTestVal4);
+
+  char humidCharCur[10]; // Space for 9 characters + null termination
+  sprintf(humidCharCur, "%d", mathTestHumid);
+  char humidCharLowest[10]; // Space for 9 characters + null termination
+  sprintf(humidCharLowest, "%d", mathTestHumidLow);
+  char humidCharHighest[10]; // Space for 9 characters + null termination
+  sprintf(humidCharHighest, "%d", mathTestHumidHigh);
+
+  char tempPrevCharF[10]; // Space for 9 characters + null termination
+  sprintf(tempPrevCharF, "%d", mathTestPrevF);
+  char tempPrevCharC[10]; // Space for 9 characters + null termination
+  sprintf(tempPrevCharC, "%d", mathTestPrevC);
+
+  char tempPrevTempLowest[10]; // Space for 9 characters + null termination
+  sprintf(tempPrevTempLowest, "%d", mathTestPrevTempLowest);
+  char tempPrevTempHighest[10]; // Space for 9 characters + null termination
+  sprintf(tempPrevTempHighest, "%d", mathTestPrevTempHighest);
+
+  char humPrevChar[10]; // Space for 9 characters + null termination
+  sprintf(humPrevChar, "%d", mathTestPrevHum);
+  char humPrevCharLow[10]; // Space for 9 characters + null termination
+  sprintf(humPrevCharLow, "%d", mathTestPrevHumLow);
+  char humPrevCharHigh[10]; // Space for 9 characters + null termination
+  sprintf(humPrevCharHigh, "%d", mathTestPrevHumHigh);
+  // END converting to tft txt
+  // ---------------------------------
+
+
+  // ---------------------------------
+  // degree symbol for fahrenheit MAIN
+  // hide tempF degree symbol current if changing to above 99 value
+  if (temperatureF >= 100 and tempPrevF<=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("o",41,20);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("F",48,25);
+  }
+  // hide tempF degree symbol current if changing to less than 100 value
+  if (temperatureF <= 100 and tempPrevF>=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("o",59,20);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("F",66,25);
+  }
+
+  // hide temp high symbol if changing to above 99 value
+  if (tempHighest >= 100 and tempPrevHigh<=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("o",105,10);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("F",112,15);
+  }
+  // hide temp high symbol if changing to less than 100 value
+  if (tempHighest <= 100 and tempPrevHigh>=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("o",115,10);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("F",122,15);
+  }
+  // hide temp low symbol if changing to above 99 value
+  if (tempLowest >= 100 and tempPrevLow<=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("o",105,40);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("F",112,45);
+  }
+  // hide temp low symbol if changing to less than 100 value
+  if (tempLowest <= 100 and tempPrevLow>=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("o",115,40);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("F",122,45);
+  }
+
+  // hide celsius symbol if changing to above 99 value
+  if (temperatureC >= 100 and tempPrevC<=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("o",41,50);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("C",48,55);
+  }  
+  // hide celsius low symbol if changing to less than 100 value
+  if (temperatureC <= 100 and tempPrevC>=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("o",52,50);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text("C",59,55);
+  }
+
+
+
+
+  // hide tempF current if changing
+  if (temperatureF != tempPrevF) 
+  {
+    TFTscreen.setTextSize(3);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text(tempPrevCharF, 4, 23);
+  }
+  // hide tempC if changing
+  if (temperatureC != tempPrevC) 
+  {
+    TFTscreen.setTextSize(2);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text(tempPrevCharC, 15, 53);
+  }
+
+  // hide highest temp
+  if (tempHighest != tempPrevHigh) 
+  {
+    TFTscreen.setTextSize(2);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text(tempPrevTempHighest, 78, 12);
+  }
+  // hide lowest temp
+  if (tempLowest != tempPrevLow) 
+  {
+    TFTscreen.setTextSize(2);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text(tempPrevTempLowest, 78, 42);
+  }
+  // hide humidity current if changing
+  if (humidCur != humCurPrev) 
+  {
+    TFTscreen.setTextSize(3);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text(humPrevChar, 7, 110);
+  }
+  // hide humidity high if changing
+  if (humidHighest != humCurPrevHigh) 
+  {
+    TFTscreen.setTextSize(2);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text(humPrevCharHigh, 83, 95);
+  }
+  // hide humidity low if changing
+  if (humidLowest != humCurPrevLow) 
+  {
+    TFTscreen.setTextSize(2);
+    TFTscreen.stroke(0,0,0);
+    TFTscreen.text(humPrevCharLow, 83, 125);
+  }
+
+  // ---------------------------------
+  // START draw values in white
+  TFTscreen.setTextSize(3);
+  TFTscreen.stroke(255,255,255);
+  TFTscreen.text(tempCharF, 4, 23);
+
+  TFTscreen.setTextSize(2);
+  TFTscreen.stroke(255,255,255);
+  TFTscreen.text(tempCharC, 15, 53);
+
+  TFTscreen.setTextSize(2);
+  TFTscreen.stroke(255,255,255);
+  TFTscreen.text(tempCharHighest, 78, 12);
+
+  TFTscreen.setTextSize(2);
+  TFTscreen.stroke(255,255,255);
+  TFTscreen.text(tempCharLowest, 78, 42);
+
+  TFTscreen.setTextSize(3);
+  TFTscreen.stroke(255,255,255);
+  TFTscreen.text(humidCharCur, 7, 110);
+
+  TFTscreen.setTextSize(2);
+  TFTscreen.stroke(255,255,255);
+  TFTscreen.text(humidCharHighest, 83, 95);
+
+  TFTscreen.setTextSize(2);
+  TFTscreen.stroke(255,255,255);
+  TFTscreen.text(humidCharLowest, 83, 125);
+  // END draw values in white
+  // ---------------------------------
+
+
+  // ---------------------------------
+  // START only redraw symbols if changing
+  if (temperatureF >= 100 and tempPrevF<=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("o",59,20);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("F",66,25);
+  }
+  if (temperatureF <= 100 and tempPrevF>=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("o",41,20);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("F",48,25);
+  }
+  if (tempHighest >= 100 and tempPrevHigh<=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("o",115,10);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("F",122,15);
+  }
+  if (tempHighest <= 100 and tempPrevHigh>=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("o",105,10);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("F",112,15);
+  }
+  if (tempLowest >= 100 and tempPrevLow<=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("o",115,40);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("F",122,45);
+  }
+  if (tempLowest <= 100 and tempPrevLow>=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("o",110,40);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("F",117,45);
+  }
+  if (temperatureC >= 100 and tempPrevC<=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("o",52,50);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("C",59,55);
+  }
+  if (temperatureC <= 100 and tempPrevC>=100) 
+  {
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("o",41,50);
+    TFTscreen.setTextSize(1);
+    TFTscreen.stroke(20,255,20);
+    TFTscreen.text("C",48,55);
+  }
+  // END only redraw symbols if changing
+  // ---------------------------------
+
+
+  // ---------------------------------
+  // Add delay for sensor read
+  delay(1000);
+
+  // ---------------------------------
+  // Set Previous Records
+  tempPrevF = temperatureF;
+  tempPrevC = temperatureC;
+  tempPrevLow = tempLowest;
+  tempPrevHigh = tempHighest;
+  humCurPrev = humidCur;
+  humCurPrevLow = humidLowest;
+  humCurPrevHigh = humidHighest;
+
+  //end infinite loop
+}
