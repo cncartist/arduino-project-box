@@ -169,6 +169,7 @@ void loop() {
   float temperatureC = dht.readTemperature();     // Read temperature as Celsius (the default)
   float temperatureF = dht.readTemperature(true); // Read temperature as Fahrenheit (isFahrenheit = true)
   float humidCur = dht.readHumidity();
+  
 
   // set low and high temp & humidity
   if(tempLowest==0 or temperatureF<tempLowest){
@@ -243,7 +244,7 @@ void loop() {
   // ---------------------------------
   // degree symbol for fahrenheit MAIN
   // hide tempF degree symbol current if changing to above 99 value
-  if (temperatureF >= 100 and tempPrevF<=100) 
+  if ((temperatureF >= 100 and tempPrevF <= 100) or (temperatureF <= -10 and tempPrevF >= -10)) 
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(0,0,0);
@@ -253,7 +254,7 @@ void loop() {
     TFTscreen.text("F",48,25);
   }
   // hide tempF degree symbol current if changing to less than 100 value
-  if (temperatureF <= 100 and tempPrevF>=100) 
+  if ((temperatureF <= 100 and tempPrevF>=100) or (temperatureF >= -10 and tempPrevF <= -10)) 
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(0,0,0);
@@ -284,7 +285,7 @@ void loop() {
     TFTscreen.text("F",122,15);
   }
   // hide temp low symbol if changing to above 99 value
-  if (tempLowest >= 100 and tempPrevLow<=100) 
+  if ((tempLowest >= 100 and tempPrevLow<=100) or (tempLowest <= -10 and tempPrevLow >= -10))
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(0,0,0);
@@ -294,7 +295,7 @@ void loop() {
     TFTscreen.text("F",112,45);
   }
   // hide temp low symbol if changing to less than 100 value
-  if (tempLowest <= 100 and tempPrevLow>=100) 
+  if ((tempLowest <= 100 and tempPrevLow>=100) or (tempLowest >= -10 and tempPrevLow <= -10)) 
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(0,0,0);
@@ -305,7 +306,7 @@ void loop() {
   }
 
   // hide celsius symbol if changing to above 99 value
-  if (temperatureC >= 100 and tempPrevC<=100) 
+  if ((temperatureC >= 100 and tempPrevC<=100) or (temperatureC <= -10 and tempPrevC >= -10)) 
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(0,0,0);
@@ -315,7 +316,7 @@ void loop() {
     TFTscreen.text("C",48,55);
   }  
   // hide celsius low symbol if changing to less than 100 value
-  if (temperatureC <= 100 and tempPrevC>=100) 
+  if ((temperatureC <= 100 and tempPrevC>=100) or (temperatureC >= -10 and tempPrevC <= -10)) 
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(0,0,0);
@@ -414,7 +415,7 @@ void loop() {
 
   // ---------------------------------
   // START only redraw symbols if changing
-  if (temperatureF >= 100 and tempPrevF<=100) 
+  if ((temperatureF >= 100 and tempPrevF<=100) or (temperatureF <= -10 and tempPrevF >= -10)) 
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(20,255,20);
@@ -423,7 +424,7 @@ void loop() {
     TFTscreen.stroke(20,255,20);
     TFTscreen.text("F",66,25);
   }
-  if (temperatureF <= 100 and tempPrevF>=100) 
+  if ((temperatureF <= 100 and tempPrevF>=100) or (temperatureF >= -10 and tempPrevF <= -10)) 
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(20,255,20);
@@ -450,7 +451,7 @@ void loop() {
     TFTscreen.stroke(20,255,20);
     TFTscreen.text("F",112,15);
   }
-  if (tempLowest >= 100 and tempPrevLow<=100) 
+  if ((tempLowest >= 100 and tempPrevLow<=100) or (tempLowest <= -10 and tempPrevLow >= -10))
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(20,255,20);
@@ -459,7 +460,7 @@ void loop() {
     TFTscreen.stroke(20,255,20);
     TFTscreen.text("F",122,45);
   }
-  if (tempLowest <= 100 and tempPrevLow>=100) 
+  if ((tempLowest <= 100 and tempPrevLow>=100) or (tempLowest >= -10 and tempPrevLow <= -10)) 
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(20,255,20);
@@ -468,7 +469,7 @@ void loop() {
     TFTscreen.stroke(20,255,20);
     TFTscreen.text("F",117,45);
   }
-  if (temperatureC >= 100 and tempPrevC<=100) 
+  if ((temperatureC >= 100 and tempPrevC<=100) or (temperatureC <= -10 and tempPrevC >= -10)) 
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(20,255,20);
@@ -477,7 +478,7 @@ void loop() {
     TFTscreen.stroke(20,255,20);
     TFTscreen.text("C",59,55);
   }
-  if (temperatureC <= 100 and tempPrevC>=100) 
+  if ((temperatureC <= 100 and tempPrevC>=100) or (temperatureC >= -10 and tempPrevC <= -10)) 
   {
     TFTscreen.setTextSize(1);
     TFTscreen.stroke(20,255,20);
